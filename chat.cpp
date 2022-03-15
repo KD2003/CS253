@@ -6,12 +6,11 @@ using namespace std;
 for (typeof (container.begin()) it = container.begin(); it != container.end(); it++)
 
 
-map <string,string> userpass;
 
 class user{
-    int uid;
+    int matchid=0;          //0-unmatched, 1-looking for match, 2-matched
     int priority;
-    int friendid=-1;
+    string friendname="";
     public:
         string email;
         string username;
@@ -21,10 +20,25 @@ class user{
             username=uname;
             password=pass;
         }
+        user(const user&);
+        string viewfriend(){
+            return friendname;
+        }
+        void setfriend(string str){
+            friendname=str;
+        }
+        int viewmatchid(){
+            return matchid;
+        }
+        void setmatchid(int i){
+            matchid=i;
+        }
         void change_uname_pass();
+        void view_inbox();
         void send_msg();
-        friend void match(int uid);
-        friend void unmatch(int uid);
+        void match();
+        void unmatch();
+        friend void matchup();
 };
 
 vector <user> users;
@@ -39,7 +53,7 @@ void user::change_uname_pass(){
     cin>>newpass1;
     cout << "Confirm new password: ";
     cin>>newpass2;
-    if(newuname!=username){
+    if(newuname!=username && newuname!=""){
         tr(users, it){
             if((*it).username==newuname){
                 cout << "This username is already taken." << endl;
@@ -62,6 +76,68 @@ void user::change_uname_pass(){
     }
 }
 
+void user::view_inbox(){        //database
+
+}
+
+void user::send_msg(){      //database
+    if(matchid!=2){
+        cout << "Looks like you are not matched yet\nPlease try again later" << endl;
+    }
+    else{
+        string msg;
+        cout << "Enter your message: ";
+        cin >> msg;
+        //send to friendname
+    }
+}
+
+void user::match(){
+    if(matchid==2){
+        cout << "You are already have a match\nIf you wish to find another one please unmatch first" << endl;
+    }
+    if(matchid==1){
+        cout << "You are already looking for a match\nPlease wait till you find one" << endl;
+    }
+    if(matchid==0){
+        matchid=1;
+        cout << "You have started looking for a match" << endl;
+    }
+}
+
+void user::unmatch(){
+    if(matchid==2){
+        matchid=0;
+        //send msg to friend notifying about unmatch
+        tr(users, it){
+            if((*it).username==friendname){
+                (*it).matchid=0;
+                (*it).friendname="";
+                break;
+            }
+        }
+        friendname="";
+        cout << "You are unmatched yourself\nIf you wish to find another match start looking for one" << endl;
+    }
+    if(matchid==1){
+        matchid=0;
+        cout << "You have stopped looking for your match" << endl;
+    }
+    if(matchid==0){
+        cout << "You don't have a friend to unmatch" << endl;
+    }
+}
+
+void matchup(){             //should run every now and then
+    vector < string > unmatched;
+    tr(users, it){
+        if((*it).viewmatchid()==1){
+            unmatched.push_back((*it).username);
+        }
+    }
+    //working on random algo
+}
+
 void sign_up(){
     string email1,uname,pass;
     cout << "Enter emailID: ";
@@ -70,21 +146,26 @@ void sign_up(){
     cin>>uname;
     cout << "Enter password: ";
     cin>>pass;
-    if(users.empty()){
-        user newuser(email1,uname,pass);
-        users.push_back(newuser);
-        cout << "Account created successfully" << endl;
+    if(uname!=""){
+        if(users.empty()){
+            user newuser(email1,uname,pass);
+            users.push_back(newuser);
+            cout << "Account created successfully" << endl;
+        }
+        else{
+            tr(users,it){
+                if((*it).username==uname){
+                    cout << "This username is already taken." << endl;
+                    return;
+                }
+            }
+            user newuser(email1,uname,pass);
+            users.push_back(newuser);
+            cout << "Account created successfully" << endl;
+        }
     }
     else{
-        tr(users,it){
-            if((*it).username==uname){
-                cout << "This username is already taken." << endl;
-                return;
-            }
-        }
-        user newuser(email1,uname,pass);
-        users.push_back(newuser);
-        cout << "Account created successfully" << endl;
+        cout << "Username cannot be empty" << endl;
     }
     return;
 }
@@ -100,7 +181,7 @@ void sign_in(){
         if((*it).username==uname && (*it).password==pass){
             flag=1;
             cout << "You have successfully logged in, "+uname << endl;
-            // mainmenu(uname);
+            mainmenu(*it);
             break;
         }
     }
@@ -108,4 +189,98 @@ void sign_in(){
         cout << "Username or password entered is incorrect" << endl;
     }
     return;
+}
+
+void start(){
+    int choice,flag=0;
+    while(true){
+        cout << "\nPlease Enter your choice\n  1-Sign_up\n  2-Sign_in\n  3-Exit \n \n" << endl;
+        cin>>choice;
+        switch(choice){
+            case 1:{
+                sign_up();
+                break;
+            }
+            case 2:{
+                sign_in();
+                break;          //endless loop?
+            }
+            case 3:{
+                flag=1;
+                break;
+            }
+            default:{
+                cout << "Enter a valid number" << endl;
+                break;
+            }
+        }
+        if(flag){
+            break;
+        }
+    }
+}
+
+void mainmenu(user cur){
+    int choice,back=0;
+    main_menu:
+        back=0;
+        cout << "\n1-View Inbox\n2-Send Message\n3-Match\n4-Unmatch\n5-Change Credentials\n6-Log Out\n" << endl;
+        cin>>choice;
+        switch(choice){
+            case 1:{
+                cur.view_inbox();
+                cout << "Go back?";
+                cin>>back;
+                if(back){
+                    goto main_menu;
+                }
+                break;
+            }
+            case 2:{
+                cur.send_msg();
+                cout << "Go back?";
+                cin>>back;
+                if(back){
+                    goto main_menu;
+                }
+                break;
+            }
+            case 3:{
+                cur.match();
+                cout << "Go back?";
+                cin>>back;
+                if(back){
+                    goto main_menu;
+                }
+                break;
+            }
+            case 4:{
+                cur.unmatch();
+                cout << "Go back?";
+                cin>>back;
+                if(back){
+                    goto main_menu;
+                }
+                break;
+            }
+            case 5:{
+                cur.change_uname_pass();
+                cout << "Go back?";
+                cin>>back;
+                if(back){
+                    goto main_menu;
+                }
+                break;
+            }
+            case 6:{
+                system("cls");
+                //start();
+                break;
+            }
+            default:{
+                cout << "Please enter a valid number" << endl;
+                goto main_menu;
+                break;
+            }
+        }
 }
