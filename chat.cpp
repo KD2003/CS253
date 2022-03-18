@@ -20,7 +20,6 @@ class user{
             username=uname;
             password=pass;
         }
-        user(const user&);
         string viewfriend(){
             return friendname;
         }
@@ -75,6 +74,8 @@ void user::change_uname_pass(){
         return;
     }
 }
+
+void mainmenu(user cur);
 
 void user::view_inbox(){        //database
 
@@ -283,4 +284,9 @@ void mainmenu(user cur){
                 break;
             }
         }
+}
+
+int main(){
+    start();
+    return 0;
 }
