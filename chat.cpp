@@ -76,6 +76,7 @@ void user::change_uname_pass(){
 }
 
 void mainmenu(user cur);
+void matchup();
 
 void user::view_inbox(){        //database
 
@@ -103,6 +104,7 @@ void user::match(){
     if(matchid==0){
         matchid=1;
         cout << "You have started looking for a match" << endl;
+        matchup();
     }
 }
 
@@ -131,12 +133,35 @@ void user::unmatch(){
 
 void matchup(){             //should run every now and then
     vector < string > unmatched;
+    int a,b;
+    srand(time(0));
     tr(users, it){
         if((*it).viewmatchid()==1){
             unmatched.push_back((*it).username);
         }
     }
+    int total_unmatched=unmatched.size();
+    if(total_unmatched>=2){
+        a=rand()%total_unmatched;
+        b=rand()%total_unmatched;
+        while(b==a){
+            b=rand()%total_unmatched;
+        }
+        tr(users, it){
+            if((*it).username==unmatched[a]){
+                (*it).setmatchid(2);
+                (*it).setfriend(unmatched[b]);
+                //send msg to unmatched[a]
+            }
+            else if((*it).username==unmatched[b]){
+                (*it).setmatchid(2);
+                (*it).setfriend(unmatched[a]);
+                //send msg to unmatched[b]
+            }
+        }
+    }
     //working on random algo
+    return;
 }
 
 void sign_up(){
